@@ -1,4 +1,4 @@
-import 'package:flash_chat/utils.dart';
+import 'package:flash_chat/constants.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -11,6 +11,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  String email = "";
+  String password = "";
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,18 +24,24 @@ class _LoginScreenState extends State<LoginScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            SizedBox(
-              height: 200.0,
-              child: Image.asset('images/logo.png'),
+            Hero(
+              tag: 'app_logo',
+              child: SizedBox(
+                height: 250.0,
+                child: Image.asset('images/logo.png'),
+              ),
             ),
             const SizedBox(
               height: 48.0,
             ),
             TextField(
+              style: kTextFieldStyle1,
               onChanged: (value) {
-                //Do something with the user input.
+                setState(() {
+                  email = value;
+                });
               },
-              decoration: getInputDecoration(
+              decoration: kTextFieldDecoration1.copyWith(
                 hintText: "Enter your email...",
               ),
             ),
@@ -40,10 +49,13 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 8.0,
             ),
             TextField(
+              style: kTextFieldStyle1,
               onChanged: (value) {
-                //Do something with the user input.
+                setState(() {
+                  password = value;
+                });
               },
-              decoration: getInputDecoration(
+              decoration: kTextFieldDecoration1.copyWith(
                 hintText: "Enter your password...",
               ),
             ),
