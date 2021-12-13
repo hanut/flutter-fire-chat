@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flash_chat/constants.dart';
+import 'package:flash_chat/screens/welcome_screen.dart';
+import 'package:flash_chat/widgets/message_input.dart';
+import 'package:flash_chat/widgets/messages_stream.dart';
 import 'package:flutter/material.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -13,12 +16,18 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _auth = FirebaseAuth.instance;
+  final _store = FirebaseFirestore.instance;
+  String messageText = "";
   late User loggedInUser;
+  final messageTextController = TextEditingController();
+  // List<Message> messages = [];
 
   @override
   void initState() {
     super.initState();
     getCurrentUser();
+    // getMessages();
+    // messageStream();
   }
 
   void getCurrentUser() {
@@ -28,6 +37,30 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  // void getMessages() async {
+  //   var snapshot = await _store.collection("messages").get();
+  //   for (var msgSnap in snapshot.docs) {
+  //     messages.add(Message.fromSnapshot(msgSnap));
+  //   }
+  //   _isLoading = false;
+  //   setState(() {});
+  // }
+
+  // void messageStream() {
+  //   _store
+  //       .collection("messages")
+  //       .snapshots(includeMetadataChanges: false)
+  //       .forEach((changes) {
+  //     List<Message> newMessages = [];
+  //     for (var msgSnap in changes.docs) {
+  //       newMessages.add(Message.fromSnapshot(msgSnap));
+  //     }
+  //     setState(() {
+  //       messages = newMessages;
+  //     });
+  //   });
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,12 +68,18 @@ class _ChatScreenState extends State<ChatScreen> {
         leading: null,
         actions: <Widget>[
           IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                //Implement logout functionality
+              icon: const Icon(Icons.power_settings_new_rounded),
+              onPressed: () async {
+                try {
+                  await _auth.signOut();
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, WelcomeScreen.id, (route) => false);
+                } catch (e) {
+                  print(e);
+                }
               }),
         ],
-        title: const Text('⚡️Chat'),
+        title: const Hero(tag: 'app_logo', child: Text('⚡️ Chat')),
         backgroundColor: Colors.lightBlueAccent,
       ),
       body: SafeArea(
@@ -48,30 +87,29 @@ class _ChatScreenState extends State<ChatScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Container(
-              decoration: kMessageContainerDecoration,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  Expanded(
-                    child: TextField(
-                      onChanged: (value) {
-                        //Do something with the user input.
-                      },
-                      decoration: kMessageTextFieldDecoration,
-                    ),
-                  ),
-                  MaterialButton(
-                    onPressed: () {
-                      //Implement send functionality.
-                    },
-                    child: const Text(
-                      'Send',
-                      style: kSendButtonTextStyle,
-                    ),
-                  ),
-                ],
-              ),
+            MessagesStream(
+              store: _store,
+              me: loggedInUser.email ?? "",
+            ),
+            MessageInput(
+              controller: messageTextController,
+              onChanged: (value) {
+                setState(() {
+                  messageText = value;
+                });
+              },
+              onPressed: () async {
+                try {
+                  await _store.collection("messages").add({
+                    'text': messageText,
+                    'sender': loggedInUser.email,
+                    'sentAt': Timestamp.now(),
+                  });
+                  messageTextController.clear();
+                } catch (e) {
+                  print(e);
+                }
+              },
             ),
           ],
         ),
